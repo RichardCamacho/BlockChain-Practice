@@ -2,6 +2,13 @@ import React, { Component } from 'react';
 import Web3 from 'web3';
 import logo from '../logo.png';
 import './App.css';
+import Marketplace from '../abis/Marketplace.json';
+import Navbar from './Navbar';
+
+/*
+  1. Realizar la conexión con Metamask y la BlockChain con la que se está trabajandoweb3.currentProvider
+  2. Importar el Contrato inteligente 
+*/
 
 class App extends Component {
   
@@ -36,28 +43,34 @@ class App extends Component {
     //console.log(accounts);
     this.setState({account: accounts[0]});
 
+    const networkId = await web3.eth.net.getId();
+    //console.log(networkId);
+    const networkData = Marketplace.networks[networkId];//se verifica la red donde se despliega el contrato
+
+    if(networkData){//
+      const marketplace = web3.eth.Contract(Marketplace.abi, Marketplace.networks[networkId].address);
+    }else {
+        window.alert("contrato no desplegado para la red detectada");
+    }
+    
+    //console.log(Marketplace.abi, Marketplace.networks[5777].address);
   }
   
 constructor(props){
   super(props);
   this.state = {
-    account: ''
+    account: '',
+    productCount: 0,
+    products: [],
+    loading: true
   }
 }
 
   render() {
     return (
       <div>
-        <nav className="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-          <a
-            className="navbar-brand col-sm-3 col-md-2 mr-0"
-            href=""
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Marketplace
-          </a>
-        </nav>
+        <Navbar account ={this.state.account}/>
+        
         <div className="container-fluid mt-5">
           <div className="row">
             <main role="main" className="col-lg-12 d-flex text-center">
