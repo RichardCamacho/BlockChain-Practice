@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Web3 from 'web3';
-import logo from '../logo.png';
+//import logo from '../logo.png';
 import './App.css';
 import Marketplace from '../abis/Marketplace.json';
 import Navbar from './Navbar';
@@ -8,7 +8,8 @@ import Main from './Main';
 
 /*
   1. Realizar la conexión con Metamask y la BlockChain con la que se está trabajandoweb3.currentProvider
-  2. Importar el Contrato inteligente 
+  2. Importar el Contrato inteligente
+  3. Realizar la capa UI
 */
 
 class App extends Component {
@@ -51,6 +52,16 @@ class App extends Component {
     if(networkData){//
       const marketplace = web3.eth.Contract(Marketplace.abi, Marketplace.networks[networkId].address);
       this.setState({marketplace});
+      const productCount = await marketplace.methods.productCount().call();
+      this.setState({productCount});
+      //console.log(productCount);
+      //cargar productos
+      for(var i = 1; i <= productCount; i++){
+        const product = await marketplace.methods.products(i).call();
+        this.setState({
+          products: [...this.state.products, product]
+        });
+      }
       this.setState({loading: false});
     }else {
         window.alert("contrato no desplegado para la red detectada");
@@ -67,17 +78,44 @@ constructor(props){
     products: [],
     loading: true
   }
+  this.createProduct = this.createProduct.bind(this);
+  this.purchaseProduct = this.purchaseProduct.bind(this);
 }
+
+    createProduct(nombre, precio){//función para capturar los datos de un producto y enviarlo al almacenamiento
+      this.setState({loading:true});
+      this.state.marketplace.methods.createProduct(nombre, precio).send({from: this.state.account})
+      .once('receipt', (receipt) => {
+        this.setState({loading: false});
+      });
+    }
+
+    purchaseProduct(id, precio){//función para la venta de productos
+      this.setState({loading:true});
+      this.state.marketplace.methods.purchaseProduct(id).send({from: this.state.account, value: precio})
+      .once('receipt', (receipt) => {
+        this.setState({loading: false});
+      });
+    }
 
   render() {
     return (
       <div>
         <div>
           <Navbar account ={this.state.account}/>
+          <div className="container-fluid mt-5">
+              <div className="row">
+                {this.state.loading ? 
+                  "Cargando..." : 
+                  <Main 
+                  products={this.state.products}
+                  createProduct={this.createProduct}
+                  purchaseProduct={this.purchaseProduct}/>
+                }
+              </div>
+          </div>
         </div>
-        <div className="container-fluid mt-5">
-          {this. state.loading ? "Cargando" : <Main/>}
-        </div>
+        
       </div>
        );
   }
